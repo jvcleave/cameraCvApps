@@ -17,37 +17,45 @@ void ofxDynamicBackgroundCV::setup(ofxRPiCameraVideoGrabber* videoGrabber_)
     startThread();
 }
 
-void ofxDynamicBackgroundCV::update(unsigned char*  pixels, int h, int w)
-{
-    frameMat = cv::Mat(h, w, CV_8UC4, pixels, 0);
-    if(accumulatorMat.empty())
-    {
-        frameMat.convertTo(accumulatorMat, CV_32F);
-    }
-    
-    cv::accumulateWeighted(frameMat, accumulatorMat, alpha);
-    cv::convertScaleAbs(accumulatorMat, backgroundOutputMat);
-    
-}
-
-
 
 void ofxDynamicBackgroundCV::draw(int x, int y) //default:0,0
 {
-    ofxCv::drawMat(backgroundOutputMat, x, y);
+    if (!backgroundOutputMat.empty()) 
+    {
+         ofxCv::drawMat(backgroundOutputMat, x, y);
+    }
+   
 }
 
 void ofxDynamicBackgroundCV::threadedFunction()
 {
     while (isThreadRunning()) 
     {
+        if (!videoGrabber) 
+        {
+            return;
+        }
         if(videoGrabber->isFrameNew())
         {
-            update(videoGrabber->getPixels(),
-                   videoGrabber->getHeight(),
-                   videoGrabber->getWidth());
+            
+            cameraMat = cv::Mat(videoGrabber->getHeight(),
+                                videoGrabber->getWidth(),
+                                CV_8UC4,
+                                videoGrabber->getPixels(),
+                                0);
+            if(accumulatorMat.empty())
+            {
+                cameraMat.convertTo(accumulatorMat, CV_32F);
+            }
+            
+            cv::accumulateWeighted(cameraMat, accumulatorMat, alpha);
+            cv::convertScaleAbs(accumulatorMat, backgroundOutputMat);
         }
-        cv::subtract(backgroundOutputMat, frameMat, differenceMat);
+        if (!cameraMat.empty()) 
+        {
+            cv::subtract(backgroundOutputMat, cameraMat, differenceMat);
+
+        }
         if(!differenceMat.empty())
         {
             ofxCv::blur(differenceMat, 20);
@@ -59,13 +67,13 @@ void ofxDynamicBackgroundCV::threadedFunction()
 }
 void ofxDynamicBackgroundCV::drawDebug(float scale) //default:1.0
 {
-    float scaledWidth = frameMat.size().width*scale;
-    float scaledHeight = frameMat.size().height*scale;
+    float scaledWidth = cameraMat.size().width*scale;
+    float scaledHeight = cameraMat.size().height*scale;
     ofColor color1 = ofColor::black;
     ofColor color2 = ofColor::yellow;
     
-    ofxCv::drawMat(frameMat, 0, 0, scaledWidth, scaledHeight);
-    ofDrawBitmapStringHighlight("frameMat", 0, 20, color1, color2);
+    ofxCv::drawMat(cameraMat, 0, 0, scaledWidth, scaledHeight);
+    ofDrawBitmapStringHighlight("cameraMat", 0, 20, color1, color2);
     
     ofPushMatrix();
         ofTranslate(0, scaledHeight);
@@ -79,3 +87,4 @@ void ofxDynamicBackgroundCV::drawDebug(float scale) //default:1.0
             ofDrawBitmapStringHighlight("accumulatorMat", 0, 20, color1, color2);
     ofPopMatrix();
 }
+

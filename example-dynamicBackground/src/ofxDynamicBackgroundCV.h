@@ -10,16 +10,13 @@ public:
 
     ofxDynamicBackgroundCV();
     
-    void update(unsigned char*  pixels, int h, int w);
     void draw(int x=0, int y=0);
     
 	cv::Mat accumulatorMat;
-    cv::Mat frameMat;
+    cv::Mat cameraMat;
     cv::Mat backgroundOutputMat;
     cv::Mat differenceMat;
 
-    
-    ofImage& getImageRef();
     double alpha;
 
     void drawDebug(float scale=1.0);
@@ -27,7 +24,6 @@ public:
     void setup(ofxRPiCameraVideoGrabber* videoGrabber_);
     void threadedFunction();
     ofxCv::ContourFinder contourFinder;
-
 };
 
 

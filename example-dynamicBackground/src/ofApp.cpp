@@ -13,7 +13,8 @@ void ofApp::setup()
     omxCameraSettings.enablePixels = true;
     videoGrabber.setup(omxCameraSettings);
     
-    dynamicBackground.setup(&videoGrabber);
+    
+    
 }	
 
 //--------------------------------------------------------------
@@ -21,7 +22,10 @@ void ofApp::update()
 {
     if(videoGrabber.isFrameNew())
     {
-
+        if (dynamicBackground.videoGrabber == NULL) 
+        {
+            dynamicBackground.setup(&videoGrabber);
+        }
     }
 }
 
